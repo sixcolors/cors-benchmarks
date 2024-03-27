@@ -13,7 +13,6 @@ import (
 	fiberCors "github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/jub0bs/cors"
 	rsCors "github.com/rs/cors"
-	"github.com/valyala/fasthttp"
 )
 
 const (
@@ -255,21 +254,27 @@ func subBenchmark(handler http.Handler, req *http.Request) func(*testing.B) {
 
 func subBenchmarkFiber(handler fiber.Handler, middleware fiber.Handler, req *http.Request) func(*testing.B) {
 	return func(b *testing.B) {
+		// TODO: fix this, netiher calling the handler directly nor
+		// calling app.Test is equivalent to calling `handler.ServeHTTP(rec, req)`
+		// so the results are not accurate
+
 		app := fiber.New()
 		app.Use(middleware)
-		ctx := &fasthttp.RequestCtx{}
-		ctx.Request.SetRequestURI(req.RequestURI)
-		ctx.Request.Header.Set("Host", req.Host)
-		for name, values := range req.Header {
-			for _, value := range values {
-				ctx.Request.Header.Add(name, value)
-			}
-		}
+		// ctx := &fasthttp.RequestCtx{}
+		// ctx.Request.SetRequestURI(req.RequestURI)
+		// ctx.Request.Header.Set("Host", req.Host)
+		// for name, values := range req.Header {
+		// 	for _, value := range values {
+		// 		ctx.Request.Header.Add(name, value)
+		// 	}
+		// }
+		// c := app.AcquireCtx(ctx)
 
 		b.ReportAllocs()
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
-				handler(app.AcquireCtx(ctx))
+				app.Test(req)
+				// handler(c)
 			}
 		})
 	}

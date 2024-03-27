@@ -21,7 +21,7 @@ go test -run ^$ -bench .
 
 ## Some results
 
-Note: BenchmarkMiddleware/fiber_cors___malicious_ACRH_vs_preflight-24 is causing a panic in Fiber, I will investigate and fix it, then update the results.
+Note: The addition of gofiber/fiber/middleware/cors is a work in progress. I am still working on matching up two incompatiable underlying libraries, net/http and fasthttp.
 
 I've slightly redacted the results below for better readability.
 In particular, I've added a red dot next to cases where jub0bs/cors
