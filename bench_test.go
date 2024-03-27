@@ -9,8 +9,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gofiber/fiber/v2"
+	fiberCors "github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/jub0bs/cors"
 	rsCors "github.com/rs/cors"
+	"github.com/valyala/fasthttp"
 )
 
 const (
@@ -179,13 +182,22 @@ func BenchmarkMiddleware(b *testing.B) {
 			continue
 		}
 
+		// fiber/cors
+		fiberMw := fiberCors.New(fiberCors.Config{
+			AllowOrigins:     strings.Join(bc.allowedOrigins, ","),
+			AllowCredentials: bc.credentialed,
+			AllowHeaders:     strings.Join(bc.allowedReqHeaders, ","),
+		})
+		desc := pad(b, "fiber_cors", bc.desc)
+		b.Run(desc, subBenchmarkFiber(dummyHandlerFiber, fiberMw, req))
+
 		// rs/cors
 		rsMw := rsCors.New(rsCors.Options{
 			AllowedOrigins:   bc.allowedOrigins,
 			AllowCredentials: bc.credentialed,
 			AllowedHeaders:   bc.allowedReqHeaders,
 		})
-		desc := pad(b, "rs_cors", bc.desc)
+		desc = pad(b, "rs_cors", bc.desc)
 		b.Run(desc, subBenchmark(rsMw.Handler(handler), req))
 
 		// jub0bs/cors
@@ -205,6 +217,10 @@ func BenchmarkMiddleware(b *testing.B) {
 var dummyHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "Hello, World!")
 })
+
+var dummyHandlerFiber = func(c *fiber.Ctx) error {
+	return c.SendString("Hello, World!")
+}
 
 func newRequest(method string, hdrs http.Header) *http.Request {
 	const dummyEndpoint = "https://example.com/whatever"
@@ -232,6 +248,28 @@ func subBenchmark(handler http.Handler, req *http.Request) func(*testing.B) {
 			for pb.Next() {
 				rec := httptest.NewRecorder()
 				handler.ServeHTTP(rec, req)
+			}
+		})
+	}
+}
+
+func subBenchmarkFiber(handler fiber.Handler, middleware fiber.Handler, req *http.Request) func(*testing.B) {
+	return func(b *testing.B) {
+		app := fiber.New()
+		app.Use(middleware)
+		ctx := &fasthttp.RequestCtx{}
+		ctx.Request.SetRequestURI(req.RequestURI)
+		ctx.Request.Header.Set("Host", req.Host)
+		for name, values := range req.Header {
+			for _, value := range values {
+				ctx.Request.Header.Add(name, value)
+			}
+		}
+
+		b.ReportAllocs()
+		b.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				handler(app.AcquireCtx(ctx))
 			}
 		})
 	}

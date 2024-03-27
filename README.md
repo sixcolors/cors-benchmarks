@@ -1,10 +1,13 @@
-# Benchmarks comparing rs/cors and jub0bs/cors
+# Benchmarks comparing rs/cors and jub0bs/cors and gofiber/fiber/v2/middleware/cors
+
+This repo is a fork of [jub0bs/cors-benchmarks](https://github.com/jub0bs/cors-benchmarks) with the addition of the gofiber/fiber/v2/middleware/cors middleware.
 
 This repo contains benchmarks that compare the performance
-of two CORS middleware libraries:
+of three CORS middleware libraries:
 
 - the more popular [rs/cors](https://github.com/rs/cors) (v1.10.1), and
 - the more modern and user-friendly [jub0bs/cors](https://github.com/jub0bs/cors) (v0.1.0).
+- the Fiber CORS middleware [gofiber/fiber/middleware/cors](https://github.com/gofiber/fiber) (v2.52.4)
 
 ## Running the benchmarks
 
@@ -17,6 +20,8 @@ go test -run ^$ -bench .
 ```
 
 ## Some results
+
+Note: BenchmarkMiddleware/fiber_cors___malicious_ACRH_vs_preflight-24 is causing a panic in Fiber, I will investigate and fix it, then update the results.
 
 I've slightly redacted the results below for better readability.
 In particular, I've added a red dot next to cases where jub0bs/cors
