@@ -14,7 +14,7 @@ of three CORS middleware libraries:
 Run the following commands in your shell:
 
 ```shell
-git clone https://github.com/jub0bs/cors-benchmarks
+git clone https://github.com/sixcolors/cors-benchmarks
 cd cors-benchmarks
 go test -run ^$ -bench .
 ```
